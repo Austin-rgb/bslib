@@ -1,7 +1,7 @@
 from random import randint
 
 class Element:
-    def __init__(self, *elements, attributes=None):
+    def __init__(self, *elements, attributes=None, symbol='div'):
         if attributes is None:
             attributes = {}
         self.elements = []
@@ -25,7 +25,7 @@ class Element:
         self._changed = True
         self.attributes = attributes
         self.is_container = False
-        self.symbol = ''
+        self.symbol = symbol
 
     def _update_hierarchy_level(self, level):
         if self._updating_hierarchy:
@@ -39,43 +39,47 @@ class Element:
 
 
     def insert(self, *args):
+        """
+        Insert html element into the tree of this element 
+        """
         new = list(args)
         for n in new:
             n._update_hierarchy_level(self._hierarchy_level + 1)
             
         self.elements.extend(new)
+        self._changed = True
 
     def set(self, name: str, value: str):
+        """
+        Set value of an attribute in this html element 
+        """
         self.history.append(f'setting {self}: {name}="{value}"')
         if name == 'class' and 'class' in self.attributes.keys():
             if value in self.attributes[name]:
                 return
             self.attributes[name] = self.attributes[name] + ' ' + value
+            self._changed = True
         else:
             self.attributes[name] = value
 
-    def generate_attributes(self):
+    def _generate_attributes(self):
+        """
+        Generate the string for setting the attributes of this element in html
+        """
         return ' '.join(f'{key}="{value}"' for key, value in self.attributes.items())
 
     def generate(self):
+        """
+        Generate the html of this element 
+        """
         if not self._changed:
             return self._html
             
         html = '<'
         html += self.symbol
-        html += ' ' + self.generate_attributes()
+        html += ' ' + self._generate_attributes()
         
-        if self.is_container:
-            html += '>' + self.inner_html
-            for elem in self.elements:
-                html += '\n'
-
-                html += elem.generate()
-
-            html += '</' + self.symbol + '>'
-            
-        else:
-            html += '/>'
+        html += '/>'
             
         self._changed = False 
         if self.symbol == 'html':
@@ -84,54 +88,178 @@ class Element:
         return html
         
     def save_html(self,filename):
+        """
+        Save the html code of this element to a file
+        """
         new_file = open(filename,'x+')
         new_file.write(self.generate())
         
     def __repr__(self):
         return self.symbol + f' object id={self._id}: '
 
+class Container(Element):
+    def __init__(self, *elements, attributes=None, symbol='div'):
+        super().__init__(*elements, attributes=attributes,symbol=symbol)
+    def generate(self):
+        """
+        Generate the html of this element 
+        """
+        if not self._changed:
+            return self._html
+            
+        html = '<'
+        html += self.symbol
+        html += ' ' + self._generate_attributes()
+        
+        html += '>' + self.inner_html
+        for elem in self.elements:
+            html += '\n'
 
-def queen_html(symbol, is_container=False):
-    class HtmlElement(Element):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.symbol = symbol
-            self.is_container = is_container
+            html += elem.generate()
 
-    return HtmlElement
+        html += '</' + self.symbol + '>'
+
+            
+        self._changed = False 
+        if self.symbol == 'html':
+            html = '<!doctype html >' + html
+        self._html = html
+        return html
 
 
-A = queen_html('a', True)
-Body = queen_html('body', True)
-Button = queen_html('button', True)
-B = queen_html('b', True)
-Div = queen_html('div', True)
-Fieldset = queen_html('fieldset', True)
-Form = queen_html('form', True)
-Head = queen_html('head', True)
-Html = queen_html('html', True)
-Img = queen_html('img', True)
-Input = queen_html('input')
-Label = queen_html('label', True)
-Li = queen_html('li',True)
-Meta = queen_html('meta')
-Option = queen_html('option', True)
-P = queen_html('p', True)
-Script = queen_html('script', True)
-Select = queen_html('select', True)
-Span = queen_html('span')
-Strong = queen_html('strong',True)
-Table = queen_html('table', True)
-Td = queen_html('td', True)
-Th = queen_html('th', True)
-Title = queen_html('title', True)
-Tr = queen_html('tr', True)
-Ul = queen_html('ul',True)
-Link = queen_html('link', True)
-H1 = queen_html('h1', True)
-H2 = queen_html('h2', True)
-H3 = queen_html('h3', True)
-H4 = queen_html('h4', True)
-H5 = queen_html('h5', True)
-H6 = queen_html('h5', True)
-Legend = queen_html('legend', True)
+
+class A(Container):
+    def __init__(self, *elements, attributes=None, symbol='a'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Body(Container):
+    def __init__(self, *elements, attributes=None, symbol='body'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Div(Container):
+    def __init__(self, *elements, **kwargs):
+        super().__init__(*elements, **kwargs)
+
+class Button(Container):
+    def __init__(self, *elements, attributes=None, symbol='button'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class B(Element):
+    def __init__(self, *elements, attributes=None, symbol='b'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Fieldset(Container):
+    def __init__(self, *elements, attributes=None, symbol='fieldset'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Form(Container):
+    def __init__(self, *elements, attributes=None, symbol='form'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Head(Container):
+    def __init__(self, *elements, attributes=None, symbol='head'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Html(Container):
+    def __init__(self, *elements, attributes=None, symbol='html'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Img(Container):
+    def __init__(self, *elements, attributes=None, symbol='img'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Input(Element):
+    def __init__(self, *elements, attributes=None, symbol='input'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Label(Container):
+    def __init__(self, *elements, attributes=None, symbol='label'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Li(Container):
+    def __init__(self, *elements, attributes=None, symbol='li'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Meta(Container):
+    def __init__(self, *elements, attributes=None, symbol='meta'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Option(Container):
+    def __init__(self, *elements, attributes=None, symbol='option'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class P(Container):
+    def __init__(self, *elements, attributes=None, symbol='p'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Script(Container):
+    def __init__(self, *elements, attributes=None, symbol='script'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Select(Container):
+    def __init__(self, *elements, attributes=None, symbol='select'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Span(Container):
+    def __init__(self, *elements, attributes=None, symbol='span'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Strong(Container):
+    def __init__(self, *elements, attributes=None, symbol='strong'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Table(Container):
+    def __init__(self, *elements, attributes=None, symbol='table'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Td(Container):
+    def __init__(self, *elements, attributes=None, symbol='td'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Th(Container):
+    def __init__(self, *elements, attributes=None, symbol='th'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Title(Container):
+    def __init__(self, *elements, attributes=None, symbol='title'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Tr(Container):
+    def __init__(self, *elements, attributes=None, symbol='tr'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Ul(Container):
+    def __init__(self, *elements, attributes=None, symbol='ul'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Link(Container):
+    def __init__(self, *elements, attributes=None, symbol='link'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class H1(Container):
+    def __init__(self, *elements, attributes=None, symbol='h1'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class H2(Container):
+    def __init__(self, *elements, attributes=None, symbol='h2'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class H3(Container):
+    def __init__(self, *elements, attributes=None, symbol='h3'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class H4(Container):
+    def __init__(self, *elements, attributes=None, symbol='h4'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class H5(Container):
+    def __init__(self, *elements, attributes=None, symbol='h5'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class H6(Container):
+    def __init__(self, *elements, attributes=None, symbol='h6'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
+
+class Legend(Container):
+    def __init__(self, *elements, attributes=None, symbol='legend'):
+        super().__init__(*elements, attributes=attributes, symbol=symbol)
