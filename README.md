@@ -1,3 +1,9 @@
+One more cup of coffee for python developers who want to do something nice with bootstrap css
+### Installation 
+```bash
+git clone https://github.com/Austin-rgb/bslib.git
+```
+
 ### Usage
 ```python
 from html import Img, P
